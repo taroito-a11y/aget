@@ -1,9 +1,19 @@
 import os
-
-from streamlit_app import app
+import subprocess
+import sys
 
 
 if __name__ == "__main__":
     port = int(os.getenv("PORT", "5001"))
-    debug = os.getenv("FLASK_DEBUG", "0").strip() == "1"
-    app.run(host="0.0.0.0", port=port, debug=debug, use_reloader=False)
+    cmd = [
+        sys.executable,
+        "-m",
+        "streamlit",
+        "run",
+        "streamlit_app.py",
+        "--server.port",
+        str(port),
+        "--server.address",
+        "0.0.0.0",
+    ]
+    raise SystemExit(subprocess.call(cmd))
