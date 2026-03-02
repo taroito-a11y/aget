@@ -257,9 +257,9 @@ def render_assistant_message(content: str):
         f"""
         <div class="assistant-row">
           <div class="assistant-icon">✨</div>
-          <div class="assistant-col">
-            <div class="bot-name">AI Agent</div>
-            <div class="chat-card"><div class="bot-msg">{safe}</div></div>
+          <div style="flex:1; min-width:0;">
+            <div class="assistant-name">AI Agent</div>
+            <div class="assistant-bubble">{safe}</div>
           </div>
         </div>
         """,
@@ -347,24 +347,11 @@ with main_col:
             else:
                 render_assistant_message(msg["content"])
 
-    with st.form("chat_form", clear_on_submit=True):
-        prompt = st.text_area(
-            "メッセージ",
-            placeholder="例：『手数料無料！春の投資デビューキャンペーン』というバナーならクリックしますか？",
-            label_visibility="collapsed",
-        )
-        c1, c2 = st.columns([0.78, 0.22])
-        with c1:
-            st.markdown(
-                "<div class='hint'><span>Enterで送信 / Shift+Enterで改行</span><span>Mode: Assistant Connected</span></div>",
-                unsafe_allow_html=True,
-            )
-        with c2:
-            submitted = st.form_submit_button("送信", use_container_width=True)
+    prompt = st.chat_input("メッセージを入力（Enterで送信）")
+    submitted = bool(prompt and prompt.strip())
 
     thread_id_note = active_chat.get("thread_id") or "未作成"
     st.markdown(f"<div class='thread-note'>Thread: {escape(str(thread_id_note))}</div>", unsafe_allow_html=True)
-    st.markdown("</div>", unsafe_allow_html=True)
 
 if submitted and prompt.strip():
     text = prompt.strip()
