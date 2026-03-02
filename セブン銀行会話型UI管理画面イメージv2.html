@@ -1,0 +1,454 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DECA AI Assistant Console</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <script>
+        tailwind.config = {
+            darkMode: ["class"],
+            theme: {
+                extend: {
+                    colors: {
+                        border: "hsl(var(--border))",
+                        input: "hsl(var(--input))",
+                        ring: "hsl(var(--ring))",
+                        background: "hsl(var(--background))",
+                        foreground: "hsl(var(--foreground))",
+                        primary: {
+                            DEFAULT: "hsl(var(--primary))",
+                            foreground: "hsl(var(--primary-foreground))",
+                        },
+                        secondary: {
+                            DEFAULT: "hsl(var(--secondary))",
+                            foreground: "hsl(var(--secondary-foreground))",
+                        },
+                        destructive: {
+                            DEFAULT: "hsl(var(--destructive))",
+                            foreground: "hsl(var(--destructive-foreground))",
+                        },
+                        muted: {
+                            DEFAULT: "hsl(var(--muted))",
+                            foreground: "hsl(var(--muted-foreground))",
+                        },
+                        accent: {
+                            DEFAULT: "hsl(var(--accent))",
+                            foreground: "hsl(var(--accent-foreground))",
+                        },
+                        card: {
+                            DEFAULT: "hsl(var(--card))",
+                            foreground: "hsl(var(--card-foreground))",
+                        },
+                    },
+                    borderRadius: {
+                        lg: "var(--radius)",
+                        md: "calc(var(--radius) - 2px)",
+                        sm: "calc(var(--radius) - 4px)",
+                    },
+                },
+            },
+        }
+    </script>
+    <style>
+        :root {
+            --background: 220 14% 96%;
+            --foreground: 240 10% 11%;
+            --card: 0 0% 100%;
+            --card-foreground: 240 10% 11%;
+            --popover: 0 0% 100%;
+            --popover-foreground: 240 10% 11%;
+            --primary: 240 13% 8%;
+            --primary-foreground: 210 40% 98%;
+            --secondary: 220 14% 93%;
+            --secondary-foreground: 240 10% 11%;
+            --muted: 220 14% 93%;
+            --muted-foreground: 240 5% 45%;
+            --accent: 220 14% 93%;
+            --accent-foreground: 240 10% 11%;
+            --destructive: 0 84.2% 60.2%;
+            --destructive-foreground: 210 40% 98%;
+            --border: 0 0% 87%;
+            --input: 0 0% 87%;
+            --ring: 240 13% 8%;
+            --radius: 0.875rem;
+        }
+        body { font-family: Inter, "Helvetica Neue", Arial, sans-serif; }
+        
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-thumb { background: #e2e8f0; border-radius: 3px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+
+        /* Code Block Styling */
+        .code-keyword { color: #ff7b72; }
+        .code-string { color: #a5d6ff; }
+        .code-function { color: #d2a8ff; }
+        .code-comment { color: #8b949e; }
+        
+        /* Markdown/Message Styling */
+        .prose p { margin-bottom: 0.5rem; line-height: 1.6; }
+        .prose h4 { font-weight: 600; margin-top: 1rem; margin-bottom: 0.5rem; }
+        .prose ul { list-style-type: disc; padding-left: 1.5rem; margin-bottom: 0.5rem; }
+
+        /* Animation for Thinking */
+        @keyframes pulse-subtle {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+        .animate-pulse-subtle {
+            animation: pulse-subtle 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+
+        /* Fade In Animation for Buttons */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .fade-in {
+            animation: fadeIn 0.5s ease-in-out forwards;
+        }
+        .history-row.active {
+            background: hsl(var(--accent));
+            color: hsl(var(--foreground));
+        }
+    </style>
+</head>
+<body class="bg-background text-foreground antialiased overflow-hidden">
+    <div class="flex h-screen bg-background">
+        <div class="w-20 h-screen bg-card border-r flex flex-col shrink-0 z-30 items-center">
+            <div class="h-20 w-full flex items-center justify-center border-b">
+                <img src="https://deca-custom-nmcm-web.vercel.app/deca-x-logo.svg" alt="Deca X Logo" class="w-12 h-12">
+            </div>
+            <div class="flex-1 py-6 flex flex-col gap-4 items-center">
+                <a class="w-14 h-14 rounded-lg hover:bg-accent text-muted-foreground flex items-center justify-center transition-colors" href="#"><i data-lucide="layout-dashboard" class="w-5 h-5"></i></a>
+                <a class="w-14 h-14 rounded-lg bg-accent text-foreground flex items-center justify-center transition-colors" href="#"><i data-lucide="mouse-pointer-click" class="w-5 h-5"></i></a>
+                <a class="w-14 h-14 rounded-lg hover:bg-accent text-muted-foreground flex items-center justify-center transition-colors" href="#"><i data-lucide="settings" class="w-5 h-5"></i></a>
+            </div>
+            <div class="h-20 w-full flex items-center justify-center border-t">
+                <div class="w-12 h-12 rounded-full bg-slate-200 border"></div>
+            </div>
+        </div>
+
+        <aside class="w-72 h-screen bg-card border-r shrink-0 flex flex-col">
+            <div class="h-16 flex items-center justify-between px-4 border-b">
+                <h2 class="font-semibold text-sm">会話履歴</h2>
+                <button onclick="startNewChat()" class="p-2 hover:bg-accent rounded-md text-muted-foreground transition-colors" title="新しい対話">
+                    <i data-lucide="square-pen" class="w-5 h-5"></i>
+                </button>
+            </div>
+            <div id="history-list" class="flex-1 overflow-y-auto px-2 py-3 space-y-1"></div>
+        </aside>
+
+        <div class="flex-1 flex flex-col h-full overflow-hidden relative bg-background">
+            
+            <header class="h-16 border-b px-6 flex items-center justify-between bg-card shrink-0 z-10">
+                <div class="flex items-center gap-4">
+                    <h1 class="text-lg font-semibold" id="current-chat-title">Assistant Session</h1>
+                </div>
+                <button onclick="startNewChat()" class="p-2 hover:bg-accent rounded-md text-muted-foreground transition-colors" title="新しい対話">
+                    <i data-lucide="square-pen" class="w-5 h-5"></i>
+                </button>
+            </header>
+
+            <div id="chat-container" class="flex-1 overflow-y-auto min-h-0 p-4 md:p-8 space-y-6 scroll-smooth">
+                <div class="flex gap-4 max-w-4xl mx-auto">
+                    <div class="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+                        <i data-lucide="bot" class="w-5 h-5 text-primary"></i>
+                    </div>
+                    <div class="space-y-2">
+                        <div class="text-sm font-semibold">Campaign Simulator</div>
+                        <div class="p-4 bg-card border rounded-2xl rounded-tl-none shadow-sm text-sm text-foreground prose">
+                            <p>こんにちは。アシスタント接続モードです。<br>
+                            そのままメッセージを送信すると、接続済みAssistantに問い合わせます。</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="shrink-0 p-6 bg-card border-t z-10">
+                <div class="max-w-4xl mx-auto relative space-y-2">
+                    <div class="relative flex items-end gap-2 bg-card border rounded-[14px] p-2 focus-within:ring-1 focus-within:ring-ring transition-all" id="input-wrapper">
+                        <button class="p-2 hover:bg-accent rounded-lg text-muted-foreground transition-colors shrink-0" title="バナー画像添付">
+                            <i data-lucide="image-plus" class="w-5 h-5"></i>
+                        </button>
+                        
+                        <textarea id="user-input" 
+                            class="flex-1 min-h-[44px] max-h-[200px] w-full bg-transparent border-0 resize-none py-3 px-2 focus:ring-0 text-sm placeholder:text-muted-foreground focus:outline-none"
+                            placeholder="例：『手数料無料！春の投資デビューキャンペーン』というバナーならクリックしますか？" 
+                            rows="1"></textarea>
+                            
+                        <button id="send-btn" onclick="handleSend()" 
+                            class="p-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors shrink-0 disabled:opacity-50 disabled:cursor-not-allowed" disabled>
+                            <i data-lucide="arrow-up" class="w-5 h-5"></i>
+                        </button>
+                    </div>
+                    <div class="text-center mt-2 flex justify-between items-center text-xs text-muted-foreground px-2">
+                        <span>Enterで送信 / Shift+Enterで改行</span>
+                        <span>Mode: Assistant Connected</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        lucide.createIcons();
+
+        const HISTORY_STORAGE_KEY = 'assistant_chat_history_v1';
+        let historyItems = [];
+        let currentThreadId = null;
+        let activeHistoryId = null;
+
+        function saveHistory() {
+            localStorage.setItem(HISTORY_STORAGE_KEY, JSON.stringify(historyItems));
+        }
+
+        function loadHistory() {
+            try {
+                const parsed = JSON.parse(localStorage.getItem(HISTORY_STORAGE_KEY) || '[]');
+                historyItems = Array.isArray(parsed) ? parsed : [];
+            } catch (_) {
+                historyItems = [];
+            }
+        }
+
+        function resetChatContainer(description) {
+            const container = document.getElementById('chat-container');
+            container.innerHTML = `
+                <div class="flex gap-4 max-w-4xl mx-auto">
+                    <div class="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+                        <i data-lucide="bot" class="w-5 h-5 text-primary"></i>
+                    </div>
+                    <div class="space-y-2">
+                        <div class="text-sm font-semibold">Campaign Simulator</div>
+                        <div class="p-4 bg-card border rounded-2xl rounded-tl-none shadow-sm text-sm text-foreground prose">
+                            <p>${description}</p>
+                        </div>
+                    </div>
+                </div>`;
+            lucide.createIcons();
+        }
+
+        function renderHistory() {
+            const list = document.getElementById('history-list');
+            list.innerHTML = '';
+            const sorted = [...historyItems].sort((a, b) => (b.updatedAt || 0) - (a.updatedAt || 0));
+            sorted.forEach((item) => {
+                const row = document.createElement('button');
+                row.className = `history-row w-full text-left px-3 py-2 rounded-md border text-sm hover:bg-accent transition-colors ${activeHistoryId === item.id ? 'active border-primary' : 'border-transparent'}`;
+                row.innerHTML = `
+                    <div class="truncate font-medium">${escapeHtml(item.title)}</div>
+                    <div class="text-[11px] text-muted-foreground truncate">${item.threadId}</div>
+                `;
+                row.onclick = () => selectHistory(item.id);
+                list.appendChild(row);
+            });
+        }
+
+        function addHistoryItem(threadId, firstText) {
+            const title = firstText.length > 24 ? `${firstText.slice(0, 24)}...` : firstText;
+            const id = Date.now();
+            historyItems.push({ id, title, threadId, updatedAt: Date.now() });
+            activeHistoryId = id;
+            saveHistory();
+            renderHistory();
+        }
+
+        function touchHistory(id) {
+            const item = historyItems.find((h) => h.id === id);
+            if (!item) return;
+            item.updatedAt = Date.now();
+            saveHistory();
+            renderHistory();
+        }
+
+        function selectHistory(id) {
+            const item = historyItems.find((h) => h.id === id);
+            if (!item) return;
+            activeHistoryId = item.id;
+            currentThreadId = item.threadId;
+            document.getElementById('current-chat-title').innerText = item.title;
+            touchHistory(item.id);
+            resetChatContainer(`履歴「${escapeHtml(item.title)}」を開きました。<br>このまま続けて送信できます。`);
+        }
+
+        function startNewChat() {
+            document.getElementById('current-chat-title').innerText = "Assistant Session";
+            currentThreadId = null;
+            activeHistoryId = null;
+            renderHistory();
+            resetChatContainer("新しいセッションを開始しました。<br>メッセージを送信すると、接続済みAssistantに問い合わせます。");
+        }
+
+        loadHistory();
+        renderHistory();
+
+        const API_BASE_URL = window.location.protocol.startsWith('http') ? '' : 'http://localhost:5001';
+        const userInput = document.getElementById('user-input');
+        const sendBtn = document.getElementById('send-btn');
+
+        async function apiFetchJson(path, payload) {
+            const res = await fetch(`${API_BASE_URL}${path}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload || {})
+            });
+            const data = await res.json().catch(() => ({}));
+            if (!res.ok) throw new Error(data.error || `HTTP ${res.status}`);
+            return data;
+        }
+
+        async function ensureThreadExists() {
+            if (currentThreadId) return currentThreadId;
+            const data = await apiFetchJson('/api/chat/start', {});
+            currentThreadId = data.thread_id;
+            if (!currentThreadId) throw new Error('thread_id の取得に失敗しました');
+            return currentThreadId;
+        }
+
+        async function sendMessageToAssistant(message) {
+            const threadId = await ensureThreadExists();
+            const data = await apiFetchJson('/api/chat/message', {
+                thread_id: threadId,
+                message
+            });
+            return data.reply || '';
+        }
+
+        userInput.addEventListener('input', function() {
+            this.style.height = 'auto';
+            this.style.height = this.scrollHeight + 'px';
+            sendBtn.disabled = this.value.trim() === '';
+        });
+        userInput.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                if (e.isComposing) return;
+                e.preventDefault();
+                handleSend();
+            }
+        });
+
+        async function handleSend() {
+            const text = userInput.value.trim();
+            if (!text) return;
+            const startsNewThread = !currentThreadId;
+
+            appendMessage('user', text);
+            userInput.value = '';
+            userInput.style.height = 'auto';
+            sendBtn.disabled = true;
+            scrollToBottom();
+
+            const thinkingId = appendThinking("アシスタントへ問い合わせ中...");
+            scrollToBottom();
+
+            try {
+                await wait(500);
+                const reply = await sendMessageToAssistant(text);
+                removeThinkingSpinner(thinkingId);
+                appendMessage('ai', reply || "（応答テキストが空でした）");
+                if (startsNewThread && currentThreadId) {
+                    addHistoryItem(currentThreadId, text);
+                    document.getElementById('current-chat-title').innerText = historyItems.find(h => h.id === activeHistoryId)?.title || "Assistant Session";
+                } else if (activeHistoryId) {
+                    touchHistory(activeHistoryId);
+                }
+                scrollToBottom();
+            } catch (err) {
+                removeThinkingSpinner(thinkingId);
+                appendMessage('system', `エラー: ${err.message || '通信に失敗しました。サーバー起動状態を確認してください。'}`);
+                scrollToBottom();
+            }
+        }
+
+        function appendMessage(role, content) {
+            const container = document.getElementById('chat-container');
+            const div = document.createElement('div');
+            
+            if (role === 'user') {
+                div.className = "flex gap-4 max-w-4xl mx-auto justify-end shrink-0";
+                div.innerHTML = `<div class="max-w-[80%] p-4 bg-primary text-primary-foreground rounded-2xl rounded-tr-none shadow-sm text-sm whitespace-pre-wrap">${content}</div>`;
+            } else if (role === 'ai') {
+                div.className = "flex gap-4 max-w-4xl mx-auto w-full shrink-0";
+                div.innerHTML = `
+                    <div class="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+                        <i data-lucide="sparkles" class="w-5 h-5 text-primary"></i>
+                    </div>
+                    <div class="space-y-2 flex-1 min-w-0">
+                        <div class="text-sm font-semibold">AI Agent</div>
+                        <div class="p-4 bg-card border rounded-2xl rounded-tl-none shadow-sm text-sm text-foreground prose">${content.replace(/\n/g, '<br>')}</div>
+                    </div>`;
+            } else {
+                div.className = "flex justify-center my-4 shrink-0";
+                div.innerHTML = `<div class="text-xs text-muted-foreground bg-secondary/50 px-3 py-1 rounded-full">${content}</div>`;
+            }
+            container.appendChild(div);
+            lucide.createIcons();
+        }
+
+        function appendCodeCard(lang, code) {
+            const container = document.getElementById('chat-container');
+            const div = document.createElement('div');
+            div.className = "flex gap-4 max-w-4xl mx-auto w-full shrink-0";
+            
+            let highlighted = escapeHtml(code);
+            highlighted = highlighted.replace(/"[^"]*":/g, '<span class="code-keyword">$&</span>')
+                                     .replace(/: "[^"]*"/g, ': <span class="code-string">$&</span>')
+                                     .replace(/High|Medium|Low|[0-9]+%/g, '<span class="code-function">$&</span>');
+
+            div.innerHTML = `
+                <div class="w-10 h-10 shrink-0"></div>
+                <div class="flex-1 min-w-0 max-w-[90%]">
+                     <div class="border rounded-xl overflow-hidden shadow-sm bg-[#0d1117] border-slate-700">
+                        <div class="flex items-center justify-between px-4 py-2 bg-[#161b22] border-b border-slate-700">
+                            <span class="text-xs font-bold text-gray-300">${lang}</span>
+                            <div class="flex gap-2">
+                                <span class="text-[10px] text-orange-400 border border-orange-900 bg-orange-900/20 px-2 py-0.5 rounded">AI Prediction</span>
+                            </div>
+                        </div>
+                        <div class="p-4 overflow-x-auto bg-[#0d1117]"><pre class="text-gray-300 text-xs font-mono leading-relaxed">${highlighted}</pre></div>
+                    </div>
+                </div>`;
+            container.appendChild(div);
+            lucide.createIcons();
+        }
+
+        function appendThinking(initialText) {
+            const container = document.getElementById('chat-container');
+            const id = 'thought-' + Date.now();
+            const div = document.createElement('div');
+            div.className = "flex gap-4 max-w-4xl mx-auto w-full shrink-0";
+            div.innerHTML = `
+                <div class="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+                    <i data-lucide="loader" class="w-5 h-5 text-primary animate-spin"></i>
+                </div>
+                <div class="space-y-2 flex-1 min-w-0">
+                    <div class="text-sm font-semibold">System</div>
+                    <div class="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-secondary/50 text-xs text-muted-foreground animate-pulse-subtle" id="${id}">
+                        <span id="${id}-text">${initialText}</span>
+                    </div>
+                </div>`;
+            container.appendChild(div);
+            lucide.createIcons();
+            return id;
+        }
+
+        function updateThinking(id, text) { const el = document.getElementById(id + '-text'); if(el) el.innerText = text; }
+        
+        function removeThinkingSpinner(id) { 
+            const el = document.getElementById(id); 
+            if(el) {
+                const messageRoot = el.closest('.flex'); 
+                if(messageRoot) messageRoot.remove();
+            } 
+        }
+
+        function escapeHtml(text) { return text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;"); }
+        function scrollToBottom() { const c = document.getElementById('chat-container'); c.scrollTo({top: c.scrollHeight, behavior: 'smooth'}); }
+        function wait(ms) { return new Promise(r => setTimeout(r, ms)); }
+    </script>
+</body>
+</html>
