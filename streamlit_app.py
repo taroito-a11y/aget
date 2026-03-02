@@ -2,7 +2,7 @@ import os
 import time
 from datetime import datetime
 from html import escape
-from typing import Dict, List, Optional
+from typing import Dict, Optional
 
 import streamlit as st
 from dotenv import load_dotenv
@@ -135,29 +135,118 @@ def chat_css() -> str:
     return """
     <style>
       .stApp { background: #f3f4f6; }
-      .main .block-container { max-width: 100%; padding: 0.75rem 1.2rem 1.2rem; }
       [data-testid="stHeader"], [data-testid="stToolbar"] { display: none; }
-      .shell { background: #f3f4f6; border-radius: 12px; min-height: calc(100vh - 30px); }
-      .icon-rail { background: #fff; border: 1px solid #e5e7eb; border-radius: 14px; min-height: calc(100vh - 42px); padding: 12px 8px; }
-      .icon-btn { width: 42px; height: 42px; border-radius: 10px; background: #f3f4f6; color: #374151; display:flex; align-items:center; justify-content:center; margin: 8px auto; font-size: 17px; }
-      .icon-btn.active { background:#e5e7eb; color:#111827; }
-      .history-wrap, .main-wrap { background: #fff; border: 1px solid #e5e7eb; border-radius: 14px; min-height: calc(100vh - 42px); }
-      .history-header, .main-header { height: 58px; border-bottom: 1px solid #e5e7eb; padding: 0 14px; display:flex; align-items:center; justify-content:space-between; }
-      .history-title { font-size: 14px; font-weight: 600; color:#111827; }
-      .chat-card { border: 1px solid #e5e7eb; border-radius: 14px; padding: 12px 14px; background: #fff; }
-      .bot-name { font-size: 13px; font-weight: 600; color:#111827; margin-bottom: 6px; }
-      .bot-msg { font-size: 14px; color:#111827; line-height: 1.6; white-space: pre-wrap; }
-      .user-wrap { display:flex; justify-content:flex-end; }
-      .user-bubble { background:#111827; color:#fff; border-radius: 14px; border-top-right-radius: 4px; padding: 10px 14px; max-width: 80%; white-space: pre-wrap; font-size: 14px; line-height: 1.6; }
-      .assistant-row { display:flex; gap:10px; }
-      .assistant-icon { width:34px; height:34px; border-radius:999px; background:#eef2ff; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
-      .assistant-col { flex:1; min-width:0; }
-      .input-hint { font-size: 11px; color:#6b7280; display:flex; justify-content:space-between; margin-top: 6px; }
-      .thread-note { font-size: 11px; color:#6b7280; margin-top: 4px; }
-      div[data-testid="stVerticalBlock"] > div:has(> .stButton button.chat-send) { padding-top: 14px; }
-      .stButton button { border-radius: 10px; border: 1px solid #d1d5db; }
-      .stButton button.chat-send { background: #111827; color:#fff; border-color:#111827; }
-      .stTextArea textarea { border-radius: 12px; border: 1px solid #d1d5db; min-height: 84px; }
+      .main .block-container { max-width: 100%; padding: 0.75rem 1rem 1rem; }
+      .panel {
+        background: #ffffff;
+        border: 1px solid #e5e7eb;
+        border-radius: 14px;
+        padding: 0.75rem;
+      }
+      .panel-title {
+        font-size: 14px;
+        font-weight: 600;
+        color: #111827;
+      }
+      .rail {
+        min-height: calc(100vh - 32px);
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+      }
+      .rail-top {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 0.65rem;
+      }
+      .icon {
+        width: 42px;
+        height: 42px;
+        border-radius: 10px;
+        background: #f3f4f6;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 18px;
+      }
+      .icon.active {
+        background: #e5e7eb;
+      }
+      .avatar {
+        width: 42px;
+        height: 42px;
+        border-radius: 999px;
+        background: #e5e7eb;
+      }
+      .assistant-row {
+        display: flex;
+        gap: 0.65rem;
+        margin-bottom: 0.75rem;
+      }
+      .assistant-icon {
+        width: 34px;
+        height: 34px;
+        border-radius: 999px;
+        background: #eef2ff;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+      }
+      .assistant-name {
+        font-size: 13px;
+        font-weight: 600;
+        color: #111827;
+        margin-bottom: 4px;
+      }
+      .assistant-bubble {
+        border: 1px solid #e5e7eb;
+        border-radius: 14px;
+        border-top-left-radius: 4px;
+        background: #fff;
+        padding: 10px 12px;
+        font-size: 14px;
+        line-height: 1.6;
+        color: #111827;
+        white-space: pre-wrap;
+      }
+      .user-wrap {
+        display: flex;
+        justify-content: flex-end;
+        margin-bottom: 0.75rem;
+      }
+      .user-bubble {
+        max-width: 80%;
+        background: #111827;
+        color: #fff;
+        border-radius: 14px;
+        border-top-right-radius: 4px;
+        padding: 10px 12px;
+        font-size: 14px;
+        line-height: 1.6;
+        white-space: pre-wrap;
+      }
+      .hint {
+        font-size: 11px;
+        color: #6b7280;
+        display: flex;
+        justify-content: space-between;
+      }
+      .thread-note {
+        font-size: 11px;
+        color: #6b7280;
+        margin-top: 4px;
+      }
+      .stButton button {
+        border-radius: 10px;
+        border: 1px solid #d1d5db;
+      }
+      .stTextArea textarea {
+        border-radius: 12px;
+        border: 1px solid #d1d5db;
+        min-height: 84px;
+      }
     </style>
     """
 
@@ -193,59 +282,70 @@ if not st.session_state.history:
 
 st.markdown(chat_css(), unsafe_allow_html=True)
 
-left, history_col, main_col = st.columns([0.06, 0.22, 0.72], gap="small")
+left, history_col, main_col = st.columns([0.08, 0.24, 0.68], gap="small")
 
 with left:
-    st.markdown('<div class="icon-rail">', unsafe_allow_html=True)
-    st.markdown('<div style="text-align:center; padding:4px 0 8px;"><img src="https://deca-custom-nmcm-web.vercel.app/deca-x-logo.svg" width="40"></div>', unsafe_allow_html=True)
-    st.markdown('<div class="icon-btn">📊</div>', unsafe_allow_html=True)
-    st.markdown('<div class="icon-btn active">🖱️</div>', unsafe_allow_html=True)
-    st.markdown('<div class="icon-btn">⚙️</div>', unsafe_allow_html=True)
-    st.markdown('<div style="height:calc(100vh - 270px)"></div>', unsafe_allow_html=True)
-    st.markdown('<div style="width:42px;height:42px;border-radius:999px;background:#e5e7eb;margin:0 auto;"></div>', unsafe_allow_html=True)
-    st.markdown("</div>", unsafe_allow_html=True)
+    st.markdown(
+        """
+        <div class="panel rail">
+          <div class="rail-top">
+            <img src="https://deca-custom-nmcm-web.vercel.app/deca-x-logo.svg" width="40">
+            <div class="icon">📊</div>
+            <div class="icon active">🖱️</div>
+            <div class="icon">⚙️</div>
+          </div>
+          <div style="display:flex; justify-content:center;">
+            <div class="avatar"></div>
+          </div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
 
 with history_col:
-    st.markdown('<div class="history-wrap">', unsafe_allow_html=True)
-    h1, h2 = st.columns([0.75, 0.25])
+    st.markdown('<div class="panel-title">会話履歴</div>', unsafe_allow_html=True)
+    h1, h2 = st.columns([0.72, 0.28])
     with h1:
-        st.markdown('<div class="history-title">会話履歴</div>', unsafe_allow_html=True)
+        st.caption(f"{len(st.session_state.history)} chats")
     with h2:
-        if st.button("✏️", key="new_chat_side", help="新しい対話", use_container_width=True):
+        if st.button("新規", key="new_chat_side", use_container_width=True):
             new_chat()
             st.rerun()
 
-    st.markdown("<hr style='margin:0.25rem 0 0.5rem; border-color:#e5e7eb;'>", unsafe_allow_html=True)
-    for item in sorted(st.session_state.history, key=lambda x: x["updated_at"], reverse=True):
+    history_sorted = sorted(st.session_state.history, key=lambda x: x["updated_at"], reverse=True)
+    for item in history_sorted:
         title = item["title"]
         thread_id = item["thread_id"] or "thread未作成"
-        label = f"{title}\n{thread_id}"
-        if st.button(label, key=f"hist_{item['id']}", use_container_width=True):
+        is_active = item["id"] == st.session_state.active_chat_id
+        label = f"{'● ' if is_active else ''}{title}\n{thread_id}"
+        if st.button(label, key=f"hist_{item['id']}", use_container_width=True, type="secondary"):
             st.session_state.active_chat_id = item["id"]
             st.rerun()
-    st.markdown("</div>", unsafe_allow_html=True)
 
 active_chat = get_active_chat()
 if not active_chat:
     new_chat()
     active_chat = get_active_chat()
 
+submitted = False
+prompt = ""
+
 with main_col:
-    st.markdown('<div class="main-wrap">', unsafe_allow_html=True)
-    m1, m2 = st.columns([0.8, 0.2])
+    m1, m2 = st.columns([0.75, 0.25])
     with m1:
-        st.markdown(f"<div class='history-title'>{escape(active_chat['title'])}</div>", unsafe_allow_html=True)
+        st.markdown(f"<div class='panel-title'>{escape(active_chat['title'])}</div>", unsafe_allow_html=True)
     with m2:
         if st.button("新しい対話", key="new_chat_main", use_container_width=True):
             new_chat()
             st.rerun()
-    st.markdown("<hr style='margin:0.25rem 0 0.75rem; border-color:#e5e7eb;'>", unsafe_allow_html=True)
 
-    for msg in active_chat["messages"]:
-        if msg["role"] == "user":
-            render_user_message(msg["content"])
-        else:
-            render_assistant_message(msg["content"])
+    msg_box = st.container(border=True)
+    with msg_box:
+        for msg in active_chat["messages"]:
+            if msg["role"] == "user":
+                render_user_message(msg["content"])
+            else:
+                render_assistant_message(msg["content"])
 
     with st.form("chat_form", clear_on_submit=True):
         prompt = st.text_area(
@@ -256,7 +356,7 @@ with main_col:
         c1, c2 = st.columns([0.78, 0.22])
         with c1:
             st.markdown(
-                "<div class='input-hint'><span>Enterで送信 / Shift+Enterで改行</span><span>Mode: Assistant Connected</span></div>",
+                "<div class='hint'><span>Enterで送信 / Shift+Enterで改行</span><span>Mode: Assistant Connected</span></div>",
                 unsafe_allow_html=True,
             )
         with c2:
